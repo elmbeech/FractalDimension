@@ -1,27 +1,39 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Mon Sep 16 09:47:15 2019
+title: FractalDimension.py
 
-@author: daniel
+language: python3
+date: 2019-09-16
+license: GPLv3
+author:
+    original 3D implementation: Daniel Dondrop
+    multidimensional modification: Elmar Bucher, codex
+    multiprocessing modification: Elmar Bucher, codex
+
+description:
+    Capable implementation for box-counting in n-dimensional numpy arrays.
 """
+
+# libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from concurrent.futures import ProcessPoolExecutor
 from multiprocessing import shared_memory
 
-
+# global variables
 _WORKER_SHARED_MEMORY = None
 _WORKER_VOXELS = None
 _WORKER_ARRAY_SHAPE = None
 _WORKER_N_OFFSETS = None
 
 
+# functions
 def _initialize_scale_worker(shared_name, voxels_shape, voxels_dtype, array_shape, n_offsets):
     """Attach worker globals to shared voxel coordinates."""
-    global _WORKER_SHARED_MEMORY, _WORKER_VOXELS
-    global _WORKER_ARRAY_SHAPE, _WORKER_N_OFFSETS
+    global _WORKER_SHARED_MEMORY
+    global _WORKER_VOXELS
+    global _WORKER_ARRAY_SHAPE
+    global _WORKER_N_OFFSETS
 
     _WORKER_SHARED_MEMORY = shared_memory.SharedMemory(name=shared_name)
     _WORKER_VOXELS = np.ndarray(
@@ -35,9 +47,10 @@ def _initialize_scale_worker(shared_name, voxels_shape, voxels_dtype, array_shap
 
 def _count_boxes_for_scale(scale, voxels, array_shape, n_offsets):
     """Return the minimum occupied-box count over offsets at one scale."""
+    # handle input
     offsets = [0] if n_offsets == 0 else np.linspace(0, scale, n_offsets)
+    # processing
     minimum_count = None
-
     for offset in offsets:
         bin_edges = [
             np.arange(-offset, size + scale + 1, scale)
@@ -47,28 +60,29 @@ def _count_boxes_for_scale(scale, voxels, array_shape, n_offsets):
         count = int(np.count_nonzero(histogram))
         if minimum_count is None or count < minimum_count:
             minimum_count = count
-
+    # output
     return minimum_count
 
 
 def _count_boxes_in_worker(scale):
-    return _count_boxes_for_scale(
-        scale,
-        _WORKER_VOXELS,
-        _WORKER_ARRAY_SHAPE,
-        _WORKER_N_OFFSETS,
+    minimum_count = _count_boxes_for_scale(
+        scale=scale,
+        voxels=_WORKER_VOXELS,
+        array_shape=_WORKER_ARRAY_SHAPE,
+        n_offsets=_WORKER_N_OFFSETS,
     )
+    return minimum_count
 
 
 def fractal_dimension(
-    array,
-    max_box_size=None,
-    min_box_size=0,
-    n_samples=20,
-    n_offsets=0,
-    plot=False,
-    n_workers=1,
-):
+        array,
+        max_box_size=None,
+        min_box_size=0,
+        n_samples=20,
+        n_offsets=0,
+        plot=False,
+        n_workers=1,
+    ):
     """Calculate the fractal dimension of an N-dimensional numpy array.
 
     Args:
@@ -88,6 +102,7 @@ def fractal_dimension(
             scales. Defaults to 1 (sequential). None uses up to one process per
             scale, limited by the available CPUs.
     """
+    # check array dimension
     array = np.asarray(array)
     if array.ndim < 1:
         raise ValueError("array must have at least one dimension")
@@ -105,9 +120,7 @@ def fractal_dimension(
         raise ValueError("array must contain at least one value greater than zero")
 
     # count the minimum amount of boxes touched
-    if isinstance(n_workers, (bool, np.bool_)) or (
-        n_workers is not None and (not isinstance(n_workers, (int, np.integer)) or n_workers < 1)
-    ):
+    if isinstance(n_workers, (bool, np.bool_)) or (n_workers is not None and (not isinstance(n_workers, (int, np.integer)) or n_workers < 1)):
         raise ValueError("n_workers must be a positive integer or None")
 
     cpu_count = os.cpu_count() or 1
@@ -154,6 +167,7 @@ def fractal_dimension(
     Ns = np.unique(Ns)
     Ns = Ns[Ns > 0]
     scales = scales[:len(Ns)]
+
     # perform fit
     coeffs = np.polyfit(np.log(1/scales), np.log(Ns), 1)
 
