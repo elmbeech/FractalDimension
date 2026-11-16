@@ -8,7 +8,7 @@ Created on Mon Sep 16 09:47:15 2019
 import numpy as np
 import matplotlib.pyplot as plt
 
-def fractal_dimension(array, max_box_size = None, min_box_size = 1, n_samples = 20, n_offsets = 0, plot = False):
+def fractal_dimension(array, max_box_size=None, min_box_size=0, n_samples=20, n_offsets=0, plot=False):
     """Calculate the fractal dimension of an N-dimensional numpy array.
 
     Args:
@@ -33,7 +33,7 @@ def fractal_dimension(array, max_box_size = None, min_box_size = 1, n_samples = 
     if max_box_size == None:
         #default max size is the largest power of 2 that fits in the smallest dimension of the array:
         max_box_size = int(np.floor(np.log2(np.min(array.shape))))
-    scales = np.floor(np.logspace(max_box_size,min_box_size, num = n_samples, base=2))
+    scales = np.floor(np.logspace(max_box_size,min_box_size, num=n_samples, base=2))
     scales = np.unique(scales) #remove duplicates that could occur as a result of the floor
 
     #get the locations of all non-zero pixels
@@ -51,8 +51,8 @@ def fractal_dimension(array, max_box_size = None, min_box_size = 1, n_samples = 
         #search over all offsets
         for offset in offsets:
             # extend shifted box grids far enough to cover the full array.
-            bin_edges = [np.arange(-offset, size + scale + 1, scale) for size in array.shape]
-            H1, e = np.histogramdd(voxels, bins = bin_edges)
+            bin_edges = [np.arange(- offset, size + scale + 1, scale) for size in array.shape]
+            H1, e = np.histogramdd(voxels, bins=bin_edges)
             touched.append(np.sum(H1>0))
         Ns.append(touched)
     Ns = np.array(Ns)
@@ -66,15 +66,15 @@ def fractal_dimension(array, max_box_size = None, min_box_size = 1, n_samples = 
     Ns = Ns[Ns > 0]
     scales = scales[:len(Ns)]
     #perform fit
-    coeffs = np.polyfit(np.log(1/scales), np.log(Ns),1)
+    coeffs = np.polyfit(np.log(1/scales), np.log(Ns), 1)
 
     #make plot
     if plot:
         fig, ax = plt.subplots(figsize = (8,6))
-        ax.scatter(np.log(1/scales), np.log(np.unique(Ns)), c = "teal", label = "Measured ratios")
+        ax.scatter(np.log(1/scales), np.log(np.unique(Ns)), c="teal", label="Measured ratios")
         ax.set_ylabel(r"$\log N(\epsilon)$")
         ax.set_xlabel(r"$\log 1/ \epsilon$")
         fitted_y_vals = np.polyval(coeffs, np.log(1/scales))
-        ax.plot(np.log(1/scales), fitted_y_vals, "k--", label = f"Fit: {np.round(coeffs[0],3)}X+{coeffs[1]}")
+        ax.plot(np.log(1/scales), fitted_y_vals, "k--", label=f"Fit: {np.round(coeffs[0],3)}X+{coeffs[1]}")
         ax.legend();
     return(coeffs[0])
