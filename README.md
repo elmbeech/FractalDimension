@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 box = np.zeros(shape = (100,100,100))
 box[20:80,20:80,20:80] = 1
 
-fd = fractal_dimension(box, n_offsets=10, plot = True)
+fd = fractal_dimension(box, n_offsets=10, verbose=True)
 print(f"Fractal Dimension of the box: {fd}")
 plt.show()
 ```
@@ -124,7 +124,7 @@ for path in paths:
     im_t = im > filters.threshold_otsu(im)
 ## Uncomment this to get an interactive plot where you can inspect the planes of the 3d stack
 #     slice_explorer(im_t)
-    fd = fractal_dimension(im_t, n_samples = 20, n_offsets= 10, plot=True)
+    fd = fractal_dimension(im_t, n_samples = 20, n_offsets= 10, verbose=True)
     print(f"Fractal Dimention of {path}: {np.round(fd, 2)}")
     plt.show()
 
