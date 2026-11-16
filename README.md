@@ -32,6 +32,16 @@ plt.show()
 
 ![png](README_notebook_files/README_notebook_1_1.png)
 
+Scales can be counted in separate processes. `n_workers=None` uses up to one
+worker per scale, capped by the number of available CPUs; set an integer to
+limit the process count. The default `n_workers=1` runs sequentially. In a
+Python script, put multiprocessing calls inside the usual main guard:
+
+```python
+if __name__ == "__main__":
+    fd = fractal_dimension(box, n_offsets=10, n_workers=None)
+```
+
 `fractal_dimension` accepts arrays with one or more dimensions. Every array axis
 is treated as a geometric dimension, so pass data whose axes have compatible
 units and scales. For OME-TIFF data, select the time point, channel, or z slice
